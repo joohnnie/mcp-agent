@@ -1,0 +1,43 @@
+{
+  "mcpServers": {
+    "demo": {
+      "command": "python",
+      "args": [
+        "-m",
+        "mcp_demo.server"
+      ],
+      "env": {},
+      "metadata": {
+        "description": "MCP Demo Server - Production-ready example server",
+        "version": "1.0.0"
+      }
+    }
+  },
+  "_comment": "Copy this configuration to your Claude Desktop config file",
+  "_locations": {
+    "macOS": "~/Library/Application Support/Claude/claude_desktop_config.json",
+    "Windows": "%APPDATA%\\Claude\\claude_desktop_config.json",
+    "Linux": "~/.config/Claude/claude_desktop_config.json"
+  },
+  "_alternative_using_installed_command": {
+    "mcpServers": {
+      "demo": {
+        "command": "mcp-demo",
+        "args": [],
+        "env": {}
+      }
+    }
+  },
+  "_with_virtual_environment": {
+    "mcpServers": {
+      "demo": {
+        "command": "/path/to/venv/bin/python",
+        "args": [
+          "-m",
+          "mcp_demo.server"
+        ],
+        "env": {}
+      }
+    }
+  }
+}
