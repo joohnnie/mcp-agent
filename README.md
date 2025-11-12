@@ -1,6 +1,6 @@
-# MCP Demo Server
+# MCP Demo Server with Intelligent Agent System
 
-A production-ready demonstration of a **Model Context Protocol (MCP)** server implemented in Python. This project showcases best practices for building MCP servers with comprehensive examples of tools, resources, and prompts.
+A production-ready demonstration of a **Model Context Protocol (MCP)** server implemented in Python, featuring an intelligent **Agent System** with subagents and orchestration capabilities. This project showcases best practices for building MCP servers and multi-agent systems with comprehensive examples.
 
 ## What is MCP?
 
@@ -12,7 +12,37 @@ The **Model Context Protocol (MCP)** is an open protocol that standardizes how a
 
 ## Features
 
-### Tools Implemented
+### Agent System (NEW!)
+
+**Production-ready intelligent agents that work with MCP:**
+
+1. **Agent** - Core agent with MCP integration
+   - Execute tasks using MCP tools
+   - Delegate work to specialized subagents
+   - Track task execution and results
+   - Handle errors, retries, and timeouts
+
+2. **SubAgents** - Specialized agents for specific tasks
+   - CalculatorSubAgent - Mathematical calculations
+   - FileOperationsSubAgent - File system operations
+   - WeatherSubAgent - Weather information
+   - TimestampSubAgent - Timestamp operations
+   - DataProcessingSubAgent - Data processing pipelines
+
+3. **AgentOrchestrator** - Multi-agent coordination
+   - Manage pools of agents
+   - Auto-assign tasks to capable agents
+   - Execute workflows with dependencies
+   - Parallel and sequential execution
+   - Result aggregation and statistics
+
+4. **Task Management** - Robust task system
+   - Task definitions with priorities
+   - State tracking (pending, in_progress, completed, failed)
+   - Retry logic and timeout handling
+   - Detailed result tracking
+
+### MCP Server Tools
 
 1. **Calculator** - Basic mathematical operations
    - Operations: add, subtract, multiply, divide
@@ -96,7 +126,76 @@ ruff check src/
 
 ## Usage
 
-### Running the Server
+### Running the Agent System Demo
+
+Experience the full power of the agent system:
+
+```bash
+# Run comprehensive agent system demo
+python examples/agent_demo.py
+```
+
+This demo showcases:
+- Simple agent with basic tasks
+- Agent with subagents (task delegation)
+- Orchestrator managing multiple agents
+- Multi-step workflow execution
+- Data processing pipeline
+
+### Quick Agent System Example
+
+```python
+import asyncio
+from mcp_demo import Agent, AgentCapability, Task
+from mcp_demo import CalculatorSubAgent, FileOperationsSubAgent
+from mcp_demo import AgentOrchestrator, Workflow, WorkflowStep
+
+async def main():
+    # Create main agent with subagents
+    main_agent = Agent(name="MainAgent")
+    calc_sub = CalculatorSubAgent(parent_agent=main_agent)
+    file_sub = FileOperationsSubAgent(parent_agent=main_agent)
+
+    # Create tasks
+    calc_task = Task(
+        name="Calculate",
+        task_type="calculation",
+        parameters={"operation": "add", "a": 10, "b": 20},
+    )
+
+    # Execute - automatically delegated to appropriate subagent
+    async with main_agent, calc_sub, file_sub:
+        result = await main_agent.execute_task(calc_task)
+        print(f"Result: {result.data}")
+
+asyncio.run(main())
+```
+
+### Using the Orchestrator
+
+```python
+from mcp_demo import AgentOrchestrator, CalculatorSubAgent, Task
+
+async def orchestrate():
+    # Create orchestrator
+    orch = AgentOrchestrator(name="MainOrch")
+
+    # Register agents
+    orch.register_agent(CalculatorSubAgent())
+
+    # Execute tasks in parallel
+    async with orch:
+        results = await orch.execute_tasks(
+            [task1, task2, task3],
+            parallel=True,
+        )
+
+        # Get statistics
+        stats = orch.get_statistics()
+        print(f"Success rate: {stats['overall_success_rate']:.1f}%")
+```
+
+### Running the MCP Server
 
 The server uses stdio for communication, which is the standard transport for MCP servers:
 
@@ -160,13 +259,22 @@ mcp-agent/
 ├── src/
 │   └── mcp_demo/
 │       ├── __init__.py          # Package initialization
-│       └── server.py            # Main server implementation
+│       ├── server.py            # MCP server implementation
+│       ├── agent.py             # Core agent with MCP integration
+│       ├── subagent.py          # Specialized subagents
+│       ├── orchestrator.py      # Multi-agent orchestration
+│       └── task.py              # Task management system
 ├── examples/
 │   ├── client.py                # Example MCP client
+│   ├── agent_demo.py            # Comprehensive agent system demo
 │   └── claude_config.json       # Example Claude Desktop config
 ├── tests/
 │   ├── __init__.py
-│   └── test_server.py           # Server tests
+│   ├── test_server.py           # Server tests
+│   └── test_agents.py           # Agent system tests
+├── docs/
+│   ├── ARCHITECTURE.md          # MCP server architecture
+│   └── AGENT_SYSTEM.md          # Agent system documentation
 ├── pyproject.toml               # Project configuration
 ├── requirements.txt             # Production dependencies
 ├── requirements-dev.txt         # Development dependencies
@@ -360,7 +468,7 @@ if name == "my-prompt":
 
 ## Testing
 
-Run the test suite:
+Run the comprehensive test suite:
 
 ```bash
 # Run all tests
@@ -369,11 +477,15 @@ pytest
 # Run with coverage
 pytest --cov=mcp_demo --cov-report=html
 
-# Run specific test file
-pytest tests/test_server.py
+# Run specific test files
+pytest tests/test_server.py      # MCP server tests
+pytest tests/test_agents.py      # Agent system tests
 
 # Run with verbose output
 pytest -v
+
+# Run agent tests only
+pytest tests/test_agents.py -v
 ```
 
 ## Best Practices Demonstrated
@@ -434,6 +546,12 @@ Contributions are welcome! Please:
 3. Commit your changes (`git commit -m 'Add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
+
+## Documentation
+
+- [Agent System Documentation](docs/AGENT_SYSTEM.md) - Complete guide to the agent system
+- [MCP Server Architecture](docs/ARCHITECTURE.md) - MCP server design and implementation
+- [Agent Demo Examples](examples/agent_demo.py) - Comprehensive usage examples
 
 ## Resources
 
