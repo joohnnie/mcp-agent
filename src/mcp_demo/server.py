@@ -297,29 +297,80 @@ class MCPDemoServer:
             )
         ]
 
+    def _validate_path(self, path: Path) -> tuple[bool, str]:
+        """
+        Validate file path for security.
+
+        Args:
+            path: Path to validate
+
+        Returns:
+            Tuple of (is_valid, error_message)
+        """
+        try:
+            # Resolve to absolute path to prevent directory traversal
+            resolved_path = path.resolve()
+
+            # Check for path traversal attempts
+            cwd = Path.cwd().resolve()
+            try:
+                # Check if path is within current working directory or temp directory
+                resolved_path.relative_to(cwd)
+            except ValueError:
+                # Not under cwd, check if it's in /tmp
+                import tempfile
+                temp_dir = Path(tempfile.gettempdir()).resolve()
+                try:
+                    resolved_path.relative_to(temp_dir)
+                except ValueError:
+                    return False, f"Access denied: Path {path} is outside allowed directories"
+
+            return True, ""
+        except Exception as e:
+            return False, f"Path validation error: {str(e)}"
+
     async def _file_operations_tool(self, arguments: dict) -> list[TextContent]:
-        """Execute file operations."""
+        """Execute file operations with security validation."""
         file_input = FileOperationInput(**arguments)
         path = Path(file_input.path)
+
+        # Validate path for security
+        is_valid, error_msg = self._validate_path(path)
+        if not is_valid:
+            return [TextContent(type="text", text=f"Security Error: {error_msg}")]
 
         try:
             if file_input.operation == "read":
                 if not path.exists():
                     return [TextContent(type="text", text=f"Error: File {path} does not exist")]
+                if not path.is_file():
+                    return [TextContent(type="text", text=f"Error: {path} is not a file")]
+                # Limit file size to prevent memory issues (10MB max)
+                if path.stat().st_size > 10 * 1024 * 1024:
+                    return [TextContent(type="text", text="Error: File too large (max 10MB)")]
                 content = path.read_text()
                 return [TextContent(type="text", text=f"File content:\n{content}")]
 
             elif file_input.operation == "write":
                 if file_input.content is None:
                     return [TextContent(type="text", text="Error: content parameter required for write")]
+                # Limit content size (10MB max)
+                if len(file_input.content) > 10 * 1024 * 1024:
+                    return [TextContent(type="text", text="Error: Content too large (max 10MB)")]
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(file_input.content)
                 return [TextContent(type="text", text=f"Successfully wrote to {path}")]
 
             elif file_input.operation == "list":
+                if not path.exists():
+                    return [TextContent(type="text", text=f"Error: Directory {path} does not exist")]
                 if not path.is_dir():
                     return [TextContent(type="text", text=f"Error: {path} is not a directory")]
                 files = [str(f.name) for f in path.iterdir()]
+                # Limit number of files listed
+                if len(files) > 1000:
+                    files = files[:1000]
+                    return [TextContent(type="text", text=f"Files in {path} (showing first 1000):\n" + "\n".join(files))]
                 return [TextContent(type="text", text=f"Files in {path}:\n" + "\n".join(files))]
 
             elif file_input.operation == "exists":

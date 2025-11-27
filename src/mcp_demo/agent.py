@@ -104,7 +104,19 @@ class Agent:
             return
 
         try:
-            # Close the session and streams
+            # Close the session and streams properly
+            if hasattr(self, "stdio") and self.stdio:
+                try:
+                    await self.stdio.aclose()
+                except Exception as e:
+                    logger.warning(f"Error closing stdio stream: {e}")
+
+            if hasattr(self, "write") and self.write:
+                try:
+                    await self.write.aclose()
+                except Exception as e:
+                    logger.warning(f"Error closing write stream: {e}")
+
             self._connected = False
             self.session = None
             logger.info(f"Agent {self.name} disconnected from MCP server")
