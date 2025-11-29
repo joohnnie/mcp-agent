@@ -61,7 +61,9 @@ class FileOperationInput(BaseModel):
         description="The operation: read, write, list, exists"
     )
     path: str = Field(description="File or directory path")
-    content: Optional[str] = Field(default=None, description="Content to write (for write operation)")
+    content: Optional[str] = Field(
+        default=None, description="Content to write (for write operation)"
+    )
 
 
 class WeatherInput(BaseModel):
@@ -121,7 +123,10 @@ class MCPDemoServer:
         return [
             Tool(
                 name="calculator",
-                description="Perform basic mathematical operations (add, subtract, multiply, divide)",
+                description=(
+                    "Perform basic mathematical operations "
+                    "(add, subtract, multiply, divide)"
+                ),
                 inputSchema=CalculatorInput.model_json_schema(),
             ),
             Tool(
@@ -352,25 +357,46 @@ class MCPDemoServer:
 
             elif file_input.operation == "write":
                 if file_input.content is None:
-                    return [TextContent(type="text", text="Error: content parameter required for write")]
+                    return [
+                        TextContent(
+                            type="text",
+                            text="Error: content parameter required for write",
+                        )
+                    ]
                 # Limit content size (10MB max)
                 if len(file_input.content) > 10 * 1024 * 1024:
-                    return [TextContent(type="text", text="Error: Content too large (max 10MB)")]
+                    return [
+                        TextContent(
+                            type="text", text="Error: Content too large (max 10MB)"
+                        )
+                    ]
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(file_input.content)
                 return [TextContent(type="text", text=f"Successfully wrote to {path}")]
 
             elif file_input.operation == "list":
                 if not path.exists():
-                    return [TextContent(type="text", text=f"Error: Directory {path} does not exist")]
+                    return [
+                        TextContent(
+                            type="text",
+                            text=f"Error: Directory {path} does not exist",
+                        )
+                    ]
                 if not path.is_dir():
-                    return [TextContent(type="text", text=f"Error: {path} is not a directory")]
+                    return [
+                        TextContent(
+                            type="text", text=f"Error: {path} is not a directory"
+                        )
+                    ]
                 files = [str(f.name) for f in path.iterdir()]
                 # Limit number of files listed
                 if len(files) > 1000:
                     files = files[:1000]
-                    return [TextContent(type="text", text=f"Files in {path} (showing first 1000):\n" + "\n".join(files))]
-                return [TextContent(type="text", text=f"Files in {path}:\n" + "\n".join(files))]
+                    files_text = f"Files in {path} (showing first 1000):\n"
+                    files_text += "\n".join(files)
+                    return [TextContent(type="text", text=files_text)]
+                files_text = f"Files in {path}:\n" + "\n".join(files)
+                return [TextContent(type="text", text=files_text)]
 
             elif file_input.operation == "exists":
                 exists = path.exists()
