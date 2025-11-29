@@ -13,7 +13,9 @@ import asyncio
 import json
 import logging
 import os
+import random
 import sys
+import tempfile
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
@@ -21,14 +23,12 @@ from typing import Any, Optional
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import (
-    Resource,
-    Tool,
-    TextContent,
-    ImageContent,
-    EmbeddedResource,
+    GetPromptResult,
     Prompt,
     PromptMessage,
-    GetPromptResult,
+    Resource,
+    TextContent,
+    Tool,
 )
 from pydantic import BaseModel, Field, AnyUrl
 
@@ -318,7 +318,6 @@ class MCPDemoServer:
                 resolved_path.relative_to(cwd)
             except ValueError:
                 # Not under cwd, check if it's in /tmp
-                import tempfile
                 temp_dir = Path(tempfile.gettempdir()).resolve()
                 try:
                     resolved_path.relative_to(temp_dir)
@@ -388,7 +387,6 @@ class MCPDemoServer:
         weather_input = WeatherInput(**arguments)
 
         # Simulated weather data
-        import random
         temp_c = random.randint(-10, 35)
         temp_f = (temp_c * 9/5) + 32
 
