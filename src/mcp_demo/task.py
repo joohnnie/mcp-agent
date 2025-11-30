@@ -10,7 +10,7 @@ from enum import Enum
 from typing import Any, Optional
 from uuid import uuid4
 
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class TaskStatus(str, Enum):
@@ -126,6 +126,4 @@ class Task(BaseModel):
             return (self.completed_at - self.started_at).total_seconds()
         return None
 
-    model_config = ConfigDict(
-        json_encoders={datetime: lambda v: v.isoformat()}
-    )
+    model_config = ConfigDict()
