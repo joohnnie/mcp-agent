@@ -13,7 +13,9 @@ import asyncio
 import json
 import logging
 import os
+import random
 import sys
+import tempfile
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
@@ -21,16 +23,14 @@ from typing import Any, Optional
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import (
-    Resource,
-    Tool,
-    TextContent,
-    ImageContent,
-    EmbeddedResource,
+    GetPromptResult,
     Prompt,
     PromptMessage,
-    GetPromptResult,
+    Resource,
+    TextContent,
+    Tool,
 )
-from pydantic import BaseModel, Field, AnyUrl
+from pydantic import AnyUrl, BaseModel, Field
 
 # Configure logging
 logging.basicConfig(
@@ -61,7 +61,9 @@ class FileOperationInput(BaseModel):
         description="The operation: read, write, list, exists"
     )
     path: str = Field(description="File or directory path")
-    content: Optional[str] = Field(default=None, description="Content to write (for write operation)")
+    content: str | None = Field(
+        default=None, description="Content to write (for write operation)"
+    )
 
 
 class WeatherInput(BaseModel):
@@ -121,7 +123,10 @@ class MCPDemoServer:
         return [
             Tool(
                 name="calculator",
-                description="Perform basic mathematical operations (add, subtract, multiply, divide)",
+                description=(
+                    "Perform basic mathematical operations "
+                    "(add, subtract, multiply, divide)"
+                ),
                 inputSchema=CalculatorInput.model_json_schema(),
             ),
             Tool(
@@ -297,30 +302,101 @@ class MCPDemoServer:
             )
         ]
 
+    def _validate_path(self, path: Path) -> tuple[bool, str]:
+        """
+        Validate file path for security.
+
+        Args:
+            path: Path to validate
+
+        Returns:
+            Tuple of (is_valid, error_message)
+        """
+        try:
+            # Resolve to absolute path to prevent directory traversal
+            resolved_path = path.resolve()
+
+            # Check for path traversal attempts
+            cwd = Path.cwd().resolve()
+            try:
+                # Check if path is within current working directory or temp directory
+                resolved_path.relative_to(cwd)
+            except ValueError:
+                # Not under cwd, check if it's in /tmp
+                temp_dir = Path(tempfile.gettempdir()).resolve()
+                try:
+                    resolved_path.relative_to(temp_dir)
+                except ValueError:
+                    return False, f"Access denied: Path {path} is outside allowed directories"
+
+            return True, ""
+        except Exception as e:
+            return False, f"Path validation error: {str(e)}"
+
     async def _file_operations_tool(self, arguments: dict) -> list[TextContent]:
-        """Execute file operations."""
+        """Execute file operations with security validation."""
         file_input = FileOperationInput(**arguments)
         path = Path(file_input.path)
+
+        # Validate path for security
+        is_valid, error_msg = self._validate_path(path)
+        if not is_valid:
+            return [TextContent(type="text", text=f"Security Error: {error_msg}")]
 
         try:
             if file_input.operation == "read":
                 if not path.exists():
                     return [TextContent(type="text", text=f"Error: File {path} does not exist")]
+                if not path.is_file():
+                    return [TextContent(type="text", text=f"Error: {path} is not a file")]
+                # Limit file size to prevent memory issues (10MB max)
+                if path.stat().st_size > 10 * 1024 * 1024:
+                    return [TextContent(type="text", text="Error: File too large (max 10MB)")]
                 content = path.read_text()
                 return [TextContent(type="text", text=f"File content:\n{content}")]
 
             elif file_input.operation == "write":
                 if file_input.content is None:
-                    return [TextContent(type="text", text="Error: content parameter required for write")]
+                    return [
+                        TextContent(
+                            type="text",
+                            text="Error: content parameter required for write",
+                        )
+                    ]
+                # Limit content size (10MB max)
+                if len(file_input.content) > 10 * 1024 * 1024:
+                    return [
+                        TextContent(
+                            type="text", text="Error: Content too large (max 10MB)"
+                        )
+                    ]
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(file_input.content)
                 return [TextContent(type="text", text=f"Successfully wrote to {path}")]
 
             elif file_input.operation == "list":
+                if not path.exists():
+                    return [
+                        TextContent(
+                            type="text",
+                            text=f"Error: Directory {path} does not exist",
+                        )
+                    ]
                 if not path.is_dir():
-                    return [TextContent(type="text", text=f"Error: {path} is not a directory")]
+                    return [
+                        TextContent(
+                            type="text", text=f"Error: {path} is not a directory"
+                        )
+                    ]
                 files = [str(f.name) for f in path.iterdir()]
-                return [TextContent(type="text", text=f"Files in {path}:\n" + "\n".join(files))]
+                # Limit number of files listed
+                if len(files) > 1000:
+                    files = files[:1000]
+                    files_text = f"Files in {path} (showing first 1000):\n"
+                    files_text += "\n".join(files)
+                    return [TextContent(type="text", text=files_text)]
+                files_text = f"Files in {path}:\n" + "\n".join(files)
+                return [TextContent(type="text", text=files_text)]
 
             elif file_input.operation == "exists":
                 exists = path.exists()
@@ -337,7 +413,6 @@ class MCPDemoServer:
         weather_input = WeatherInput(**arguments)
 
         # Simulated weather data
-        import random
         temp_c = random.randint(-10, 35)
         temp_f = (temp_c * 9/5) + 32
 
@@ -461,7 +536,7 @@ For more information, visit the repository README.
             raise ValueError(f"Unknown resource URI: {uri}")
 
     async def get_prompt(
-        self, name: str, arguments: Optional[dict[str, str]] = None
+        self, name: str, arguments: dict[str, str] | None = None
     ) -> GetPromptResult:
         """
         Get a prompt template with arguments filled in.

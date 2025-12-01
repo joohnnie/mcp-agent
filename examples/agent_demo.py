@@ -10,7 +10,6 @@ This example demonstrates:
 """
 
 import asyncio
-import json
 import logging
 
 from mcp_demo.agent import Agent, AgentCapability
@@ -83,7 +82,7 @@ async def demo_simple_agent():
 
         # Show statistics
         stats = agent.get_task_statistics()
-        print(f"\n📊 Agent Statistics:")
+        print("\n📊 Agent Statistics:")
         print(f"  Total tasks: {stats['total_tasks']}")
         print(f"  Completed: {stats['completed']}")
         print(f"  Success rate: {stats['success_rate']:.1f}%")
@@ -146,7 +145,7 @@ async def demo_agent_with_subagents():
             print(f"  Success: {result.success}")
 
         # Show statistics
-        print(f"\n📊 Agent Statistics:")
+        print("\n📊 Agent Statistics:")
         for agent in [main_agent, calc_subagent, file_subagent, weather_subagent]:
             stats = agent.get_task_statistics()
             print(f"\n  {agent.name}:")
@@ -222,7 +221,7 @@ async def demo_orchestrator():
         results = await orchestrator.execute_tasks(tasks, parallel=True)
 
         print("\n📋 Task Results:")
-        for task, result in zip(tasks, results):
+        for task, result in zip(tasks, results, strict=True):
             print(f"\n  ✓ {task.name} (Priority: {task.priority.value})")
             print(f"    Success: {result.success}")
             if result.success:
@@ -230,7 +229,7 @@ async def demo_orchestrator():
 
         # Show orchestrator statistics
         stats = orchestrator.get_statistics()
-        print(f"\n📊 Orchestrator Statistics:")
+        print("\n📊 Orchestrator Statistics:")
         print(f"  Total agents: {stats['total_agents']}")
         print(f"  Tasks executed: {stats['total_tasks_executed']}")
         print(f"  Success rate: {stats['overall_success_rate']:.1f}%")
@@ -329,7 +328,7 @@ async def demo_workflow():
 
         # Show statistics
         stats = orchestrator.get_statistics()
-        print(f"\n📊 Workflow Statistics:")
+        print("\n📊 Workflow Statistics:")
         print(f"  Workflows executed: {stats['workflows_executed']}")
         print(f"  Total tasks: {stats['total_tasks_executed']}")
         print(f"  Success rate: {stats['overall_success_rate']:.1f}%")
@@ -361,7 +360,7 @@ async def demo_data_processing():
         )
 
         result = await data_agent.execute_task(write_task)
-        print(f"\n✓ Step 1: Write data")
+        print("\n✓ Step 1: Write data")
         print(f"  Success: {result.success}")
 
         # Step 2: Read the data
@@ -376,7 +375,7 @@ async def demo_data_processing():
         )
 
         result = await data_agent.execute_task(read_task)
-        print(f"\n✓ Step 2: Read data")
+        print("\n✓ Step 2: Read data")
         print(f"  Success: {result.success}")
         print(f"  Data: {result.data[:100]}")
 
@@ -396,14 +395,14 @@ async def demo_data_processing():
             ),
         ]
 
-        print(f"\n✓ Step 3: Process data")
+        print("\n✓ Step 3: Process data")
         results = await data_agent.execute_tasks(calc_tasks)
-        for task, result in zip(calc_tasks, results):
+        for task, result in zip(calc_tasks, results, strict=True):
             print(f"  {task.name}: {result.data if result.success else 'Failed'}")
 
         # Show statistics
         stats = data_agent.get_task_statistics()
-        print(f"\n📊 Data Processing Statistics:")
+        print("\n📊 Data Processing Statistics:")
         print(f"  Total tasks: {stats['total_tasks']}")
         print(f"  Success rate: {stats['success_rate']:.1f}%")
 

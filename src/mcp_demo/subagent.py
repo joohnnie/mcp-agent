@@ -6,7 +6,6 @@ the base Agent class but are focused on specific task types.
 """
 
 import logging
-from typing import Optional
 
 from .agent import Agent, AgentCapability
 
@@ -25,10 +24,10 @@ class SubAgent(Agent):
     def __init__(
         self,
         name: str,
-        parent_agent: Optional[Agent] = None,
+        parent_agent: Agent | None = None,
         server_command: str = "python",
-        server_args: Optional[list[str]] = None,
-        capabilities: Optional[list[AgentCapability]] = None,
+        server_args: list[str] | None = None,
+        capabilities: list[AgentCapability] | None = None,
     ):
         """
         Initialize a subagent.
@@ -49,7 +48,8 @@ class SubAgent(Agent):
         self.parent_agent = parent_agent
         if parent_agent:
             parent_agent.register_subagent(self)
-        logger.info(f"Initialized subagent: {self.name} (Parent: {parent_agent.name if parent_agent else 'None'})")
+        parent_name = parent_agent.name if parent_agent else 'None'
+        logger.info(f"Initialized subagent: {self.name} (Parent: {parent_name})")
 
 
 class CalculatorSubAgent(SubAgent):
@@ -58,7 +58,7 @@ class CalculatorSubAgent(SubAgent):
     def __init__(
         self,
         name: str = "CalculatorAgent",
-        parent_agent: Optional[Agent] = None,
+        parent_agent: Agent | None = None,
     ):
         """
         Initialize a calculator subagent.
@@ -92,7 +92,7 @@ class FileOperationsSubAgent(SubAgent):
     def __init__(
         self,
         name: str = "FileOpsAgent",
-        parent_agent: Optional[Agent] = None,
+        parent_agent: Agent | None = None,
     ):
         """
         Initialize a file operations subagent.
@@ -136,7 +136,7 @@ class WeatherSubAgent(SubAgent):
     def __init__(
         self,
         name: str = "WeatherAgent",
-        parent_agent: Optional[Agent] = None,
+        parent_agent: Agent | None = None,
     ):
         """
         Initialize a weather subagent.
@@ -165,7 +165,7 @@ class TimestampSubAgent(SubAgent):
     def __init__(
         self,
         name: str = "TimestampAgent",
-        parent_agent: Optional[Agent] = None,
+        parent_agent: Agent | None = None,
     ):
         """
         Initialize a timestamp subagent.
@@ -199,7 +199,7 @@ class DataProcessingSubAgent(SubAgent):
     def __init__(
         self,
         name: str = "DataProcessorAgent",
-        parent_agent: Optional[Agent] = None,
+        parent_agent: Agent | None = None,
     ):
         """
         Initialize a data processing subagent.

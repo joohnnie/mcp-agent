@@ -7,10 +7,10 @@ for the agent system.
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 from uuid import uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class TaskStatus(str, Enum):
@@ -37,8 +37,8 @@ class TaskResult(BaseModel):
 
     success: bool = Field(description="Whether the task completed successfully")
     data: Any = Field(default=None, description="Result data from the task")
-    error: Optional[str] = Field(default=None, description="Error message if failed")
-    execution_time: Optional[float] = Field(
+    error: str | None = Field(default=None, description="Error message if failed")
+    execution_time: float | None = Field(
         default=None, description="Task execution time in seconds"
     )
     metadata: dict[str, Any] = Field(
@@ -67,25 +67,25 @@ class Task(BaseModel):
     status: TaskStatus = Field(
         default=TaskStatus.PENDING, description="Current task status"
     )
-    result: Optional[TaskResult] = Field(default=None, description="Task result if completed")
-    parent_task_id: Optional[str] = Field(
+    result: TaskResult | None = Field(default=None, description="Task result if completed")
+    parent_task_id: str | None = Field(
         default=None, description="Parent task ID if this is a subtask"
     )
-    assigned_agent_id: Optional[str] = Field(
+    assigned_agent_id: str | None = Field(
         default=None, description="ID of the agent assigned to this task"
     )
     created_at: datetime = Field(
         default_factory=datetime.now, description="Task creation timestamp"
     )
-    started_at: Optional[datetime] = Field(
+    started_at: datetime | None = Field(
         default=None, description="Task start timestamp"
     )
-    completed_at: Optional[datetime] = Field(
+    completed_at: datetime | None = Field(
         default=None, description="Task completion timestamp"
     )
     max_retries: int = Field(default=3, description="Maximum retry attempts")
     retry_count: int = Field(default=0, description="Current retry count")
-    timeout: Optional[float] = Field(
+    timeout: float | None = Field(
         default=None, description="Task timeout in seconds"
     )
 
@@ -120,13 +120,10 @@ class Task(BaseModel):
         self.retry_count += 1
         self.status = TaskStatus.PENDING
 
-    def get_execution_time(self) -> Optional[float]:
+    def get_execution_time(self) -> float | None:
         """Get the task execution time in seconds."""
         if self.started_at and self.completed_at:
             return (self.completed_at - self.started_at).total_seconds()
         return None
 
-    class Config:
-        """Pydantic configuration."""
-
-        json_encoders = {datetime: lambda v: v.isoformat()}
+    model_config = ConfigDict()

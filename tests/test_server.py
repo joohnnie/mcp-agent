@@ -9,12 +9,14 @@ Tests cover:
 - Input validation
 """
 
-import json
 import pytest
-from pathlib import Path
-from datetime import datetime
 
-from mcp_demo.server import MCPDemoServer, CalculatorInput, FileOperationInput, WeatherInput
+from mcp_demo.server import (
+    CalculatorInput,
+    FileOperationInput,
+    MCPDemoServer,
+    WeatherInput,
+)
 
 
 @pytest.fixture
@@ -416,7 +418,7 @@ class TestInputValidation:
         assert valid_input.b == 20
 
         # Test with missing required field
-        with pytest.raises(Exception):
+        with pytest.raises((ValueError, TypeError)):
             CalculatorInput(operation="add", a=10)  # Missing 'b'
 
     def test_file_operation_input_validation(self):
