@@ -49,7 +49,8 @@ class SubAgent(Agent):
         self.parent_agent = parent_agent
         if parent_agent:
             parent_agent.register_subagent(self)
-        logger.info(f"Initialized subagent: {self.name} (Parent: {parent_agent.name if parent_agent else 'None'})")
+        parent_name = parent_agent.name if parent_agent else 'None'
+        logger.info(f"Initialized subagent: {self.name} (Parent: {parent_name})")
 
 
 class CalculatorSubAgent(SubAgent):

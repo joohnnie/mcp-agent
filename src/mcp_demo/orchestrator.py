@@ -255,7 +255,11 @@ class AgentOrchestrator:
                     s for s in workflow.steps.values() if not s.completed
                 ]
                 if incomplete_steps:
-                    error_msg = f"Workflow {workflow.name} is stuck. Incomplete steps: {[s.name for s in incomplete_steps]}"
+                    step_names = [s.name for s in incomplete_steps]
+                    error_msg = (
+                        f"Workflow {workflow.name} is stuck. "
+                        f"Incomplete steps: {step_names}"
+                    )
                     logger.error(error_msg)
                     raise RuntimeError(error_msg)
                 break
