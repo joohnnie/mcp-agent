@@ -30,7 +30,7 @@ from mcp.types import (
     TextContent,
     Tool,
 )
-from pydantic import BaseModel, Field, AnyUrl
+from pydantic import AnyUrl, BaseModel, Field
 
 # Configure logging
 logging.basicConfig(
@@ -61,7 +61,7 @@ class FileOperationInput(BaseModel):
         description="The operation: read, write, list, exists"
     )
     path: str = Field(description="File or directory path")
-    content: Optional[str] = Field(
+    content: str | None = Field(
         default=None, description="Content to write (for write operation)"
     )
 
@@ -536,7 +536,7 @@ For more information, visit the repository README.
             raise ValueError(f"Unknown resource URI: {uri}")
 
     async def get_prompt(
-        self, name: str, arguments: Optional[dict[str, str]] = None
+        self, name: str, arguments: dict[str, str] | None = None
     ) -> GetPromptResult:
         """
         Get a prompt template with arguments filled in.

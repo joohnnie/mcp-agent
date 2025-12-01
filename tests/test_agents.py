@@ -10,18 +10,19 @@ Tests cover:
 - Error handling and retries
 """
 
-import pytest
 from datetime import datetime
 
-from mcp_demo.task import Task, TaskResult, TaskStatus, TaskPriority
+import pytest
+
 from mcp_demo.agent import Agent, AgentCapability
+from mcp_demo.orchestrator import AgentOrchestrator, Workflow, WorkflowStep
 from mcp_demo.subagent import (
     CalculatorSubAgent,
+    DataProcessingSubAgent,
     FileOperationsSubAgent,
     WeatherSubAgent,
-    DataProcessingSubAgent,
 )
-from mcp_demo.orchestrator import AgentOrchestrator, Workflow, WorkflowStep
+from mcp_demo.task import Task, TaskPriority, TaskResult, TaskStatus
 
 
 # ============================================================================

@@ -7,10 +7,10 @@ coordinating complex workflows, and aggregating results.
 
 import asyncio
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from .agent import Agent
-from .task import Task, TaskResult, TaskStatus, TaskPriority
+from .task import Task, TaskResult
 
 logger = logging.getLogger(__name__)
 
@@ -22,8 +22,8 @@ class WorkflowStep:
         self,
         name: str,
         tasks: list[Task],
-        agent_id: Optional[str] = None,
-        depends_on: Optional[list[str]] = None,
+        agent_id: str | None = None,
+        depends_on: list[str] | None = None,
     ):
         """
         Initialize a workflow step.
@@ -127,7 +127,7 @@ class AgentOrchestrator:
             agent = self.agents.pop(agent_id)
             logger.info(f"Unregistered agent {agent.name} from orchestrator")
 
-    def find_agent_for_task(self, task: Task) -> Optional[Agent]:
+    def find_agent_for_task(self, task: Task) -> Agent | None:
         """
         Find an appropriate agent to handle a task.
 
@@ -150,7 +150,7 @@ class AgentOrchestrator:
         return capable_agents[0]
 
     async def execute_task(
-        self, task: Task, agent_id: Optional[str] = None
+        self, task: Task, agent_id: str | None = None
     ) -> TaskResult:
         """
         Execute a task using an appropriate agent.
@@ -273,7 +273,7 @@ class AgentOrchestrator:
             step_results = await asyncio.gather(*step_tasks)
 
             # Store results and mark steps as completed
-            for step, results in zip(ready_steps, step_results):
+            for step, results in zip(ready_steps, step_results, strict=True):
                 step.results = results
                 all_results[step.name] = results
                 workflow.mark_step_completed(step.name)

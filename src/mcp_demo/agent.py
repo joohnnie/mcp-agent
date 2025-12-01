@@ -11,7 +11,7 @@ This module provides a production-ready agent implementation that can:
 
 import asyncio
 import logging
-from typing import Any, Optional
+from typing import Any
 from uuid import uuid4
 
 from mcp import ClientSession, StdioServerParameters
@@ -51,8 +51,8 @@ class Agent:
         self,
         name: str,
         server_command: str = "python",
-        server_args: Optional[list[str]] = None,
-        capabilities: Optional[list[AgentCapability]] = None,
+        server_args: list[str] | None = None,
+        capabilities: list[AgentCapability] | None = None,
     ):
         """
         Initialize an agent.
@@ -68,8 +68,8 @@ class Agent:
         self.server_command = server_command
         self.server_args = server_args or ["-m", "mcp_demo.server"]
         self.capabilities = capabilities or []
-        self.session: Optional[ClientSession] = None
-        self.subagents: dict[str, "Agent"] = {}
+        self.session: ClientSession | None = None
+        self.subagents: dict[str, Agent] = {}
         self.task_history: list[Task] = []
         self._connected = False
         logger.info(f"Initialized agent: {self.name} (ID: {self.id})")
@@ -145,7 +145,7 @@ class Agent:
         """
         return any(cap.task_type == task.task_type for cap in self.capabilities)
 
-    def get_capability_for_task(self, task: Task) -> Optional[AgentCapability]:
+    def get_capability_for_task(self, task: Task) -> AgentCapability | None:
         """
         Get the capability for a specific task.
 
@@ -252,7 +252,7 @@ class Agent:
             return TaskResult(success=False, error=error_msg)
 
     async def execute_task_with_timeout(
-        self, task: Task, timeout: Optional[float] = None
+        self, task: Task, timeout: float | None = None
     ) -> TaskResult:
         """
         Execute a task with an optional timeout.
@@ -319,7 +319,7 @@ class Agent:
 
         # Convert exceptions to failed TaskResults
         processed_results = []
-        for i, result in enumerate(results):
+        for result in results:
             if isinstance(result, Exception):
                 error_msg = f"Task failed with exception: {str(result)}"
                 processed_results.append(TaskResult(success=False, error=error_msg))
